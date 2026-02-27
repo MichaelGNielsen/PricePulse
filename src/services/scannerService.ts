@@ -1,15 +1,24 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { SearchResult } from "../types";
+import { SearchResult, SearchLocation } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
-export async function scanForDeals(query: string): Promise<SearchResult> {
+export async function scanForDeals(query: string, location: SearchLocation = 'DK'): Promise<SearchResult> {
   const model = "gemini-3-flash-preview";
   
+  const locationContext = {
+    'DK': 'Focus ONLY on Danish retailers (e.g., Proshop, Elgiganten, Komplett.dk, Power.dk) and prices in DKK.',
+    'Nordics': 'Focus on retailers in Denmark, Sweden, Norway, and Finland (e.g., Komplett, NetOnNet, Gigantti). Use local currencies.',
+    'EU': 'Focus on retailers within the European Union (e.g., Amazon.de, Mindfactory, ComputerUniverse). Prices in EUR or local EU currencies.',
+    'Global': 'Search globally across all major international retailers (e.g., Amazon.com, Newegg, B&H).'
+  }[location] || 'Focus on Danish retailers.';
+
   const prompt = `You are a professional price comparison expert and web scanner. 
   Find the best current deals for: "${query}".
   
-  Search for real-time prices from reputable retailers. 
+  LOCATION CONTEXT: ${locationContext}
+  
+  Search for real-time prices from reputable retailers in the specified region. 
   Focus on finding the lowest prices, current discounts, and availability.
   
   Return the results in a structured JSON format with:

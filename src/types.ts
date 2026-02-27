@@ -1,3 +1,5 @@
+export type SearchLocation = 'DK' | 'Nordics' | 'EU' | 'Global';
+
 export interface Deal {
   id: string;
   title: string;

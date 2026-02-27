@@ -13,10 +13,12 @@ import {
   Loader2,
   AlertCircle,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Globe,
+  MapPin
 } from 'lucide-react';
 import { scanForDeals } from './services/scannerService';
-import { Deal, SearchResult } from './types';
+import { Deal, SearchResult, SearchLocation } from './types';
 import { cn } from './lib/utils';
 
 const QUICK_SEARCHES = [
@@ -26,8 +28,16 @@ const QUICK_SEARCHES = [
   { label: '4K Gaming Monitor', icon: Monitor, query: '27 inch 4K 144Hz gaming monitor deals' },
 ];
 
+const LOCATIONS: { value: SearchLocation; label: string; flag: string }[] = [
+  { value: 'DK', label: 'Danmark', flag: '🇩🇰' },
+  { value: 'Nordics', label: 'Norden', flag: '🇪🇺' },
+  { value: 'EU', label: 'Europa', flag: '🇪🇺' },
+  { value: 'Global', label: 'Verden', flag: '🌐' },
+];
+
 export default function App() {
   const [query, setQuery] = useState('');
+  const [location, setLocation] = useState<SearchLocation>('DK');
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +50,7 @@ export default function App() {
     setResult(null);
     
     try {
-      const data = await scanForDeals(searchQuery);
+      const data = await scanForDeals(searchQuery, location);
       setResult(data);
     } catch (err) {
       setError('Kunne ikke gennemføre scanningen. Prøv venligst igen.');
@@ -107,6 +117,29 @@ export default function App() {
                 placeholder="Hvad leder du efter? (f.eks. 12TB Harddisk)"
                 className="flex-1 bg-transparent border-none focus:ring-0 text-lg py-3 placeholder:text-zinc-400"
               />
+              
+              {/* Location Selector */}
+              <div className="hidden sm:flex items-center gap-1 border-l border-zinc-200 px-2 mr-2">
+                <div className="flex bg-zinc-100 p-1 rounded-lg">
+                  {LOCATIONS.map((loc) => (
+                    <button
+                      key={loc.value}
+                      onClick={() => setLocation(loc.value)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5",
+                        location === loc.value 
+                          ? "bg-white text-zinc-900 shadow-sm" 
+                          : "text-zinc-500 hover:text-zinc-700"
+                      )}
+                      title={loc.label}
+                    >
+                      <span className="text-base leading-none">{loc.flag}</span>
+                      <span className="hidden lg:inline">{loc.value}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <button 
                 onClick={() => handleSearch()}
                 disabled={isScanning || !query.trim()}
@@ -124,6 +157,27 @@ export default function App() {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+
+          {/* Mobile Location Selector */}
+          <div className="sm:hidden mt-4 flex justify-center">
+            <div className="flex bg-white border border-zinc-200 p-1 rounded-xl shadow-sm">
+              {LOCATIONS.map((loc) => (
+                <button
+                  key={loc.value}
+                  onClick={() => setLocation(loc.value)}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2",
+                    location === loc.value 
+                      ? "bg-brand-600 text-white shadow-md" 
+                      : "text-zinc-500 hover:bg-zinc-50"
+                  )}
+                >
+                  <span>{loc.flag}</span>
+                  {loc.label}
+                </button>
+              ))}
             </div>
           </div>
 
