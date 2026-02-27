@@ -1,0 +1,5 @@
+{
+  "name": "PricePulse",
+  "description": "A real-time web scanner that finds the best deals and lowest prices across the internet using AI-powered search.",
+  "requestFramePermissions": []
+}
