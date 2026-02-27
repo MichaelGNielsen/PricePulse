@@ -16,3 +16,11 @@ export interface SearchResult {
   summary: string;
   sources: { title: string; uri: string }[];
 }
+
+export interface SavedSearch {
+  id: string;
+  query: string;
+  location: SearchLocation;
+  timestamp: number;
+  result: SearchResult;
+}
