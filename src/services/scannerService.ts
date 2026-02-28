@@ -18,8 +18,11 @@ export async function scanForDeals(query: string, location: SearchLocation = 'DK
   
   LOCATION CONTEXT: ${locationContext}
   
-  Search for real-time prices from reputable retailers in the specified region. 
-  Focus on finding the lowest prices, current discounts, and availability.
+  CRITICAL INSTRUCTIONS:
+  1. DIRECT PRODUCT LINKS: The 'url' MUST lead directly to the specific product page where the item can be purchased. DO NOT link to search results pages, category pages, or generic homepages.
+  2. PRICE ACCURACY: The 'price' MUST be the exact price currently shown on the linked product page. Verify the price carefully.
+  3. SPECIFICITY: If the query specifies a model number (e.g., ST8000DM004), ensure the results match that EXACT model.
+  4. AVAILABILITY: Only include items that are currently in stock or available for order.
   
   Return the results in a structured JSON format with:
   1. An array of 'deals' each containing: title, price (with currency), store name, url, description (short), and rating (if available).

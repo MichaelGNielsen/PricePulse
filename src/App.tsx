@@ -22,10 +22,13 @@ import {
   ArrowLeftRight,
   Clock,
   LayoutGrid,
-  List
+  List,
+  Gift,
+  User,
+  Coins
 } from 'lucide-react';
 import { scanForDeals } from './services/scannerService';
-import { Deal, SearchResult, SearchLocation, SavedSearch } from './types';
+import { Deal, SearchResult, SearchLocation, SavedSearch, SavedItem } from './types';
 import { cn } from './lib/utils';
 
 const QUICK_SEARCHES = [
@@ -48,17 +51,34 @@ export default function App() {
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<'scanner' | 'compare'>('scanner');
+  const [view, setView] = useState<'scanner' | 'compare' | 'gift'>('scanner');
   
+  // Gift Finder State
+  const [giftRecipient, setGiftRecipient] = useState('');
+  const [giftInterests, setGiftInterests] = useState('');
+  const [giftBudget, setGiftBudget] = useState('');
+
   // Saved searches state
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>(() => {
     const saved = localStorage.getItem('pricepulse_saved');
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Saved individual items state
+  const [savedItems, setSavedItems] = useState<SavedItem[]>(() => {
+    const saved = localStorage.getItem('pricepulse_items');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [compareSubView, setCompareSubView] = useState<'searches' | 'items'>('items');
+
   useEffect(() => {
     localStorage.setItem('pricepulse_saved', JSON.stringify(savedSearches));
   }, [savedSearches]);
+
+  useEffect(() => {
+    localStorage.setItem('pricepulse_items', JSON.stringify(savedItems));
+  }, [savedItems]);
 
   const handleSearch = async (searchQuery: string = query) => {
     if (!searchQuery.trim()) return;
@@ -70,12 +90,19 @@ export default function App() {
     try {
       const data = await scanForDeals(searchQuery, location);
       setResult(data);
+      setView('scanner'); // Switch to scanner view to show results
     } catch (err) {
       setError('Kunne ikke gennemføre scanningen. Prøv venligst igen.');
       console.error(err);
     } finally {
       setIsScanning(false);
     }
+  };
+
+  const handleGiftSearch = () => {
+    const giftQuery = `Gave til ${giftRecipient} der er vild med ${giftInterests}, budget ca. ${giftBudget} kr. Find specifikke produkter og de bedste priser.`;
+    setQuery(giftQuery);
+    handleSearch(giftQuery);
   };
 
   const saveCurrentSearch = () => {
@@ -94,6 +121,25 @@ export default function App() {
 
   const deleteSavedSearch = (id: string) => {
     setSavedSearches(prev => prev.filter(s => s.id !== id));
+  };
+
+  const saveItem = (deal: Deal) => {
+    const newItem: SavedItem = {
+      id: crypto.randomUUID(),
+      deal,
+      query: query || 'Hurtig søgning',
+      location,
+      timestamp: Date.now()
+    };
+    setSavedItems(prev => [newItem, ...prev]);
+  };
+
+  const deleteSavedItem = (id: string) => {
+    setSavedItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const isItemSaved = (dealUrl: string) => {
+    return savedItems.some(item => item.deal.url === dealUrl);
   };
 
   const isAlreadySaved = result && savedSearches.some(s => 
@@ -125,6 +171,16 @@ export default function App() {
               <span className="hidden sm:inline">Scanner</span>
             </button>
             <button 
+              onClick={() => setView('gift')}
+              className={cn(
+                "text-sm font-medium transition-colors flex items-center gap-2",
+                view === 'gift' ? "text-brand-600" : "text-zinc-500 hover:text-brand-600"
+              )}
+            >
+              <Gift className="w-4 h-4" />
+              <span className="hidden sm:inline">Gavefinder</span>
+            </button>
+            <button 
               onClick={() => setView('compare')}
               className={cn(
                 "text-sm font-medium transition-colors flex items-center gap-2 relative",
@@ -133,9 +189,9 @@ export default function App() {
             >
               <ArrowLeftRight className="w-4 h-4" />
               <span className="hidden sm:inline">Sammenlign</span>
-              {savedSearches.length > 0 && (
+              {(savedSearches.length > 0 || savedItems.length > 0) && (
                 <span className="absolute -top-2 -right-3 bg-brand-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                  {savedSearches.length}
+                  {savedSearches.length + savedItems.length}
                 </span>
               )}
             </button>
@@ -357,11 +413,25 @@ export default function App() {
                               <div className="bg-zinc-100 px-3 py-1 rounded-full text-xs font-bold text-zinc-500 uppercase tracking-tight">
                                 {deal.store}
                               </div>
-                              {deal.rating && (
-                                <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
-                                  ★ {deal.rating}
-                                </div>
-                              )}
+                              <div className="flex items-center gap-2">
+                                {deal.rating && (
+                                  <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
+                                    ★ {deal.rating}
+                                  </div>
+                                )}
+                                <button 
+                                  onClick={() => isItemSaved(deal.url) ? null : saveItem(deal)}
+                                  className={cn(
+                                    "p-1.5 rounded-lg transition-all",
+                                    isItemSaved(deal.url) 
+                                      ? "text-brand-600 bg-brand-50" 
+                                      : "text-zinc-400 hover:text-brand-600 hover:bg-zinc-100"
+                                  )}
+                                  title={isItemSaved(deal.url) ? "Gemt" : "Gem til sammenligning"}
+                                >
+                                  {isItemSaved(deal.url) ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                                </button>
+                              </div>
                             </div>
                             <h3 className="text-xl font-bold text-zinc-900 mb-2 group-hover:text-brand-600 transition-colors">
                               {deal.title}
@@ -411,6 +481,120 @@ export default function App() {
                 </AnimatePresence>
               </div>
             </motion.div>
+          ) : view === 'gift' ? (
+            <motion.div
+              key="gift-view"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="max-w-4xl mx-auto"
+            >
+              <div className="text-center mb-12">
+                <div className="w-16 h-16 bg-brand-100 text-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Gift className="w-8 h-8" />
+                </div>
+                <h2 className="text-3xl font-display font-bold text-zinc-900 mb-4">AI Gavefinder</h2>
+                <p className="text-zinc-500">Fortæl os hvem gaven er til, og vi finder de bedste idéer og priser.</p>
+              </div>
+
+              <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-zinc-700 flex items-center gap-2">
+                      <User className="w-4 h-4 text-brand-600" />
+                      Hvem er gaven til?
+                    </label>
+                    <input 
+                      type="text"
+                      value={giftRecipient}
+                      onChange={(e) => setGiftRecipient(e.target.value)}
+                      placeholder="F.eks. Dreng på 8 år"
+                      className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-zinc-700 flex items-center gap-2">
+                      <Coins className="w-4 h-4 text-brand-600" />
+                      Budget (kr.)
+                    </label>
+                    <input 
+                      type="text"
+                      value={giftBudget}
+                      onChange={(e) => setGiftBudget(e.target.value)}
+                      placeholder="F.eks. 300"
+                      className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2 mb-8">
+                  <label className="text-sm font-bold text-zinc-700 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-brand-600" />
+                    Interesser / Tema
+                  </label>
+                  <textarea 
+                    value={giftInterests}
+                    onChange={(e) => setGiftInterests(e.target.value)}
+                    placeholder="F.eks. Harry Potter, LEGO, gaming..."
+                    rows={3}
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all resize-none"
+                  />
+                </div>
+
+                <button 
+                  onClick={handleGiftSearch}
+                  disabled={isScanning || !giftRecipient || !giftInterests}
+                  className="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-zinc-800 disabled:opacity-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-zinc-900/10"
+                >
+                  {isScanning ? (
+                    <>
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      Finder gaver...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-6 h-6" />
+                      Find Perfekte Gaver
+                    </>
+                  )}
+                </button>
+
+                <div className="mt-8 pt-8 border-t border-zinc-100">
+                  <h4 className="text-sm font-bold text-zinc-400 uppercase tracking-widest mb-4">Populære eksempler</h4>
+                  <div className="flex flex-wrap gap-3">
+                    <button 
+                      onClick={() => {
+                        setGiftRecipient('Dreng på 8 år');
+                        setGiftInterests('Harry Potter');
+                        setGiftBudget('300');
+                      }}
+                      className="px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-full text-xs font-bold text-zinc-600 hover:border-brand-500 hover:text-brand-600 transition-all"
+                    >
+                      ⚡️ Harry Potter (8 år)
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setGiftRecipient('Pige på 10 år');
+                        setGiftInterests('Kreativitet, tegning');
+                        setGiftBudget('500');
+                      }}
+                      className="px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-full text-xs font-bold text-zinc-600 hover:border-brand-500 hover:text-brand-600 transition-all"
+                    >
+                      🎨 Kreativ (10 år)
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setGiftRecipient('Mand på 30 år');
+                        setGiftInterests('Kaffe, gadgets');
+                        setGiftBudget('1000');
+                      }}
+                      className="px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-full text-xs font-bold text-zinc-600 hover:border-brand-500 hover:text-brand-600 transition-all"
+                    >
+                      ☕️ Kaffe-elsker (30 år)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           ) : (
             <motion.div
               key="compare-view"
@@ -419,92 +603,182 @@ export default function App() {
               exit={{ opacity: 0, x: -20 }}
               className="max-w-6xl mx-auto"
             >
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
                 <div>
-                  <h2 className="text-3xl font-display font-bold text-zinc-900">Gemte Søgninger</h2>
-                  <p className="text-zinc-500">Sammenlign dine fundne tilbud og hold øje med priserne.</p>
+                  <h2 className="text-3xl font-display font-bold text-zinc-900">Sammenlign</h2>
+                  <p className="text-zinc-500">Hold styr på dine favorit-produkter og tidligere søgninger.</p>
                 </div>
-                <button 
-                  onClick={() => setView('scanner')}
-                  className="bg-white border border-zinc-200 px-4 py-2 rounded-xl text-sm font-bold text-zinc-600 hover:border-brand-500 hover:text-brand-600 transition-all flex items-center gap-2"
-                >
-                  <Search className="w-4 h-4" />
-                  Ny Scanning
-                </button>
-              </div>
-
-              {savedSearches.length === 0 ? (
-                <div className="bg-white border-2 border-dashed border-zinc-200 rounded-3xl p-20 text-center">
-                  <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-400">
-                    <Bookmark className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-xl font-bold text-zinc-900 mb-2">Ingen gemte søgninger endnu</h3>
-                  <p className="text-zinc-500 mb-6">Gem dine scanninger for at sammenligne priser senere.</p>
+                
+                <div className="flex bg-white border border-zinc-200 p-1 rounded-xl shadow-sm">
                   <button 
-                    onClick={() => setView('scanner')}
-                    className="bg-brand-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-700 transition-all"
+                    onClick={() => setCompareSubView('items')}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2",
+                      compareSubView === 'items' ? "bg-brand-600 text-white shadow-md" : "text-zinc-500 hover:bg-zinc-50"
+                    )}
                   >
-                    Start din første scanning
+                    <LayoutGrid className="w-4 h-4" />
+                    Produkter ({savedItems.length})
+                  </button>
+                  <button 
+                    onClick={() => setCompareSubView('searches')}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2",
+                      compareSubView === 'searches' ? "bg-brand-600 text-white shadow-md" : "text-zinc-500 hover:bg-zinc-50"
+                    )}
+                  >
+                    <Clock className="w-4 h-4" />
+                    Søgninger ({savedSearches.length})
                   </button>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-8">
-                  {savedSearches.map((saved) => (
-                    <div key={saved.id} className="bg-white border border-zinc-200 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all">
-                      <div className="bg-zinc-50 px-6 py-4 border-b border-zinc-200 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="bg-brand-100 text-brand-700 p-2 rounded-lg">
-                            {LOCATIONS.find(l => l.value === saved.location)?.flag || '🌐'}
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-zinc-900">{saved.query}</h3>
-                            <div className="flex items-center gap-3 text-xs text-zinc-400 mt-0.5">
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(saved.timestamp).toLocaleString('da-DK')}</span>
-                              <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {saved.location}</span>
+              </div>
+
+              {compareSubView === 'items' ? (
+                <div className="space-y-6">
+                  {savedItems.length === 0 ? (
+                    <div className="bg-white border-2 border-dashed border-zinc-200 rounded-3xl p-20 text-center">
+                      <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-400">
+                        <Bookmark className="w-8 h-8" />
+                      </div>
+                      <h3 className="text-xl font-bold text-zinc-900 mb-2">Ingen gemte produkter</h3>
+                      <p className="text-zinc-500 mb-6">Gem specifikke tilbud fra dine scanninger for at sammenligne dem her.</p>
+                      <button 
+                        onClick={() => setView('scanner')}
+                        className="bg-brand-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-700 transition-all"
+                      >
+                        Find produkter nu
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {savedItems.map((item) => (
+                        <motion.div
+                          key={item.id}
+                          layout
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col relative group"
+                        >
+                          <button 
+                            onClick={() => deleteSavedItem(item.id)}
+                            className="absolute top-4 right-4 p-2 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          
+                          <div className="flex items-center gap-2 mb-4">
+                            <div className="bg-zinc-100 px-2 py-0.5 rounded text-[10px] font-bold text-zinc-500 uppercase">
+                              {item.deal.store}
+                            </div>
+                            <div className="text-[10px] text-zinc-400">
+                              Gemt {new Date(item.timestamp).toLocaleDateString('da-DK')}
                             </div>
                           </div>
-                        </div>
-                        <button 
-                          onClick={() => deleteSavedSearch(saved.id)}
-                          className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                          
+                          <h3 className="font-bold text-zinc-900 mb-2 line-clamp-2 min-h-[3rem]">
+                            {item.deal.title}
+                          </h3>
+                          
+                          <div className="text-3xl font-display font-black text-brand-600 mb-4">
+                            {item.deal.price}
+                          </div>
+                          
+                          <p className="text-xs text-zinc-500 mb-6 line-clamp-3 flex-1">
+                            {item.deal.description}
+                          </p>
+                          
+                          <div className="flex items-center gap-3">
+                            <a 
+                              href={item.deal.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 flex items-center justify-center gap-2 bg-zinc-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-brand-600 transition-all"
+                            >
+                              Gå til butik
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {savedSearches.length === 0 ? (
+                    <div className="bg-white border-2 border-dashed border-zinc-200 rounded-3xl p-20 text-center">
+                      <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-400">
+                        <Clock className="w-8 h-8" />
                       </div>
-                      <div className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {saved.result.deals.slice(0, 3).map((deal) => (
-                            <div key={deal.id} className="bg-zinc-50 rounded-xl p-4 border border-zinc-100">
-                              <div className="text-[10px] font-bold text-zinc-400 uppercase mb-1">{deal.store}</div>
-                              <h4 className="font-bold text-zinc-900 text-sm line-clamp-1 mb-2">{deal.title}</h4>
-                              <div className="flex items-center justify-between">
-                                <span className="text-brand-600 font-black">{deal.price}</span>
-                                <a href={deal.url} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-brand-600">
-                                  <ExternalLink className="w-4 h-4" />
-                                </a>
+                      <h3 className="text-xl font-bold text-zinc-900 mb-2">Ingen gemte søgninger</h3>
+                      <p className="text-zinc-500 mb-6">Gem dine fulde scanninger for at se dem igen senere.</p>
+                      <button 
+                        onClick={() => setView('scanner')}
+                        className="bg-brand-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-700 transition-all"
+                      >
+                        Start en scanning
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-6">
+                      {savedSearches.map((saved) => (
+                        <div key={saved.id} className="bg-white border border-zinc-200 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+                          <div className="bg-zinc-50 px-6 py-4 border-b border-zinc-200 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="bg-brand-100 text-brand-700 p-2 rounded-lg">
+                                {LOCATIONS.find(l => l.value === saved.location)?.flag || '🌐'}
+                              </div>
+                              <div>
+                                <h3 className="font-bold text-zinc-900">{saved.query}</h3>
+                                <div className="flex items-center gap-3 text-xs text-zinc-400 mt-0.5">
+                                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(saved.timestamp).toLocaleString('da-DK')}</span>
+                                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {saved.location}</span>
+                                </div>
                               </div>
                             </div>
-                          ))}
+                            <button 
+                              onClick={() => deleteSavedSearch(saved.id)}
+                              className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                          <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {saved.result.deals.slice(0, 3).map((deal) => (
+                                <div key={deal.id} className="bg-zinc-50 rounded-xl p-4 border border-zinc-100">
+                                  <div className="text-[10px] font-bold text-zinc-400 uppercase mb-1">{deal.store}</div>
+                                  <h4 className="font-bold text-zinc-900 text-sm line-clamp-1 mb-2">{deal.title}</h4>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-brand-600 font-black">{deal.price}</span>
+                                    <a href={deal.url} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-brand-600">
+                                      <ExternalLink className="w-4 h-4" />
+                                    </a>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="mt-4 pt-4 border-t border-zinc-100 flex justify-between items-center">
+                              <p className="text-xs text-zinc-500 italic line-clamp-1 flex-1 mr-4">
+                                "{saved.result.summary}"
+                              </p>
+                              <button 
+                                onClick={() => {
+                                  setQuery(saved.query);
+                                  setLocation(saved.location);
+                                  setResult(saved.result);
+                                  setView('scanner');
+                                }}
+                                className="text-brand-600 text-xs font-bold hover:underline"
+                              >
+                                Gense fuld scanning
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                        <div className="mt-4 pt-4 border-t border-zinc-100 flex justify-between items-center">
-                          <p className="text-xs text-zinc-500 italic line-clamp-1 flex-1 mr-4">
-                            "{saved.result.summary}"
-                          </p>
-                          <button 
-                            onClick={() => {
-                              setQuery(saved.query);
-                              setLocation(saved.location);
-                              setResult(saved.result);
-                              setView('scanner');
-                            }}
-                            className="text-brand-600 text-xs font-bold hover:underline"
-                          >
-                            Gense fuld scanning
-                          </button>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
             </motion.div>

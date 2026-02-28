@@ -24,3 +24,11 @@ export interface SavedSearch {
   timestamp: number;
   result: SearchResult;
 }
+
+export interface SavedItem {
+  id: string;
+  deal: Deal;
+  query: string;
+  location: SearchLocation;
+  timestamp: number;
+}
