@@ -99,8 +99,14 @@ export default function App() {
     }
   };
 
-  const handleGiftSearch = () => {
-    const giftQuery = `Gave til ${giftRecipient} der er vild med ${giftInterests}, budget ca. ${giftBudget} kr. Find specifikke produkter og de bedste priser.`;
+  const handleGiftSearch = (
+    recipient: string = giftRecipient, 
+    interests: string = giftInterests, 
+    budget: string = giftBudget
+  ) => {
+    if (!recipient || !interests) return;
+    
+    const giftQuery = `Gave til ${recipient} der er vild med ${interests}, budget ca. ${budget} kr. Find specifikke produkter og de bedste priser.`;
     setQuery(giftQuery);
     handleSearch(giftQuery);
   };
@@ -541,7 +547,7 @@ export default function App() {
                 </div>
 
                 <button 
-                  onClick={handleGiftSearch}
+                  onClick={() => handleGiftSearch()}
                   disabled={isScanning || !giftRecipient || !giftInterests}
                   className="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-zinc-800 disabled:opacity-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-zinc-900/10"
                 >
@@ -566,30 +572,36 @@ export default function App() {
                         setGiftRecipient('Dreng på 8 år');
                         setGiftInterests('Harry Potter');
                         setGiftBudget('300');
+                        handleGiftSearch('Dreng på 8 år', 'Harry Potter', '300');
                       }}
-                      className="px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-full text-xs font-bold text-zinc-600 hover:border-brand-500 hover:text-brand-600 transition-all"
+                      className="px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-full text-xs font-bold text-zinc-600 hover:border-brand-500 hover:text-brand-600 transition-all flex items-center gap-2"
                     >
-                      ⚡️ Harry Potter (8 år)
+                      <Zap className="w-3 h-3 text-brand-600" />
+                      Harry Potter (8 år)
                     </button>
                     <button 
                       onClick={() => {
                         setGiftRecipient('Pige på 10 år');
                         setGiftInterests('Kreativitet, tegning');
                         setGiftBudget('500');
+                        handleGiftSearch('Pige på 10 år', 'Kreativitet, tegning', '500');
                       }}
-                      className="px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-full text-xs font-bold text-zinc-600 hover:border-brand-500 hover:text-brand-600 transition-all"
+                      className="px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-full text-xs font-bold text-zinc-600 hover:border-brand-500 hover:text-brand-600 transition-all flex items-center gap-2"
                     >
-                      🎨 Kreativ (10 år)
+                      <Zap className="w-3 h-3 text-brand-600" />
+                      Kreativ (10 år)
                     </button>
                     <button 
                       onClick={() => {
                         setGiftRecipient('Mand på 30 år');
                         setGiftInterests('Kaffe, gadgets');
                         setGiftBudget('1000');
+                        handleGiftSearch('Mand på 30 år', 'Kaffe, gadgets', '1000');
                       }}
-                      className="px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-full text-xs font-bold text-zinc-600 hover:border-brand-500 hover:text-brand-600 transition-all"
+                      className="px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-full text-xs font-bold text-zinc-600 hover:border-brand-500 hover:text-brand-600 transition-all flex items-center gap-2"
                     >
-                      ☕️ Kaffe-elsker (30 år)
+                      <Zap className="w-3 h-3 text-brand-600" />
+                      Kaffe-elsker (30 år)
                     </button>
                   </div>
                 </div>

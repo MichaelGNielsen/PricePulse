@@ -19,10 +19,15 @@ export async function scanForDeals(query: string, location: SearchLocation = 'DK
   LOCATION CONTEXT: ${locationContext}
   
   CRITICAL INSTRUCTIONS:
-  1. DIRECT PRODUCT LINKS: The 'url' MUST lead directly to the specific product page where the item can be purchased. DO NOT link to search results pages, category pages, or generic homepages.
+  1. DIRECT PRODUCT LINKS (DEEP LINKS): The 'url' MUST lead directly to the specific product page where the item can be added to a cart or purchased. 
+     - DO NOT link to search results pages (URLs containing '?s=', '/search/', or similar).
+     - DO NOT link to category pages or generic homepages.
+     - The link must land on a page where the user does NOT have to search again.
+     - If you cannot find a direct product page link, do not include the deal.
   2. PRICE ACCURACY: The 'price' MUST be the exact price currently shown on the linked product page. Verify the price carefully.
   3. SPECIFICITY: If the query specifies a model number (e.g., ST8000DM004), ensure the results match that EXACT model.
   4. AVAILABILITY: Only include items that are currently in stock or available for order.
+  5. LINK VALIDITY: Before including a deal, verify that the URL is active and leads directly to the product.
   
   Return the results in a structured JSON format with:
   1. An array of 'deals' each containing: title, price (with currency), store name, url, description (short), and rating (if available).
