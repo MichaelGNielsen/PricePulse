@@ -9,6 +9,7 @@ export interface Deal {
   description?: string;
   rating?: string;
   imageUrl?: string;
+  specs?: string;
 }
 
 export interface SearchResult {

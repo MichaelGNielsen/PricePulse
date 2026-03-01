@@ -6,6 +6,7 @@ import {
   TrendingDown, 
   ExternalLink, 
   ShieldCheck, 
+  ShieldAlert,
   HardDrive, 
   Cpu, 
   Smartphone, 
@@ -406,62 +407,92 @@ export default function App() {
                       </div>
 
                       {/* Deal Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {result.deals.map((deal, index) => (
-                          <motion.div
-                            key={deal.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="group bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-xl hover:border-brand-500 transition-all flex flex-col"
-                          >
-                            <div className="flex justify-between items-start mb-4">
-                              <div className="bg-zinc-100 px-3 py-1 rounded-full text-xs font-bold text-zinc-500 uppercase tracking-tight">
-                                {deal.store}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {deal.rating && (
-                                  <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
-                                    ★ {deal.rating}
+                      {result.deals.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {result.deals.map((deal, index) => (
+                            <motion.div
+                              key={deal.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              className="group bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-xl hover:border-brand-500 transition-all flex flex-col"
+                            >
+                              <div className="flex justify-between items-start mb-4">
+                                <div className="flex flex-col gap-1">
+                                  <div className="bg-zinc-100 px-3 py-1 rounded-full text-xs font-bold text-zinc-500 uppercase tracking-tight w-fit">
+                                    {deal.store}
                                   </div>
-                                )}
-                                <button 
-                                  onClick={() => isItemSaved(deal.url) ? null : saveItem(deal)}
-                                  className={cn(
-                                    "p-1.5 rounded-lg transition-all",
-                                    isItemSaved(deal.url) 
-                                      ? "text-brand-600 bg-brand-50" 
-                                      : "text-zinc-400 hover:text-brand-600 hover:bg-zinc-100"
+                                  {deal.specs && (
+                                    <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold">
+                                      <ShieldCheck className="w-3 h-3" />
+                                      Verificeret Specifikationer
+                                    </div>
                                   )}
-                                  title={isItemSaved(deal.url) ? "Gemt" : "Gem til sammenligning"}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {deal.rating && (
+                                    <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">
+                                      ★ {deal.rating}
+                                    </div>
+                                  )}
+                                  <button 
+                                    onClick={() => isItemSaved(deal.url) ? null : saveItem(deal)}
+                                    className={cn(
+                                      "p-1.5 rounded-lg transition-all",
+                                      isItemSaved(deal.url) 
+                                        ? "text-brand-600 bg-brand-50" 
+                                        : "text-zinc-400 hover:text-brand-600 hover:bg-zinc-100"
+                                    )}
+                                    title={isItemSaved(deal.url) ? "Gemt" : "Gem til sammenligning"}
+                                  >
+                                    {isItemSaved(deal.url) ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                                  </button>
+                                </div>
+                              </div>
+                              <h3 className="text-xl font-bold text-zinc-900 mb-2 group-hover:text-brand-600 transition-colors">
+                                {deal.title}
+                              </h3>
+                              <p className="text-zinc-500 text-sm mb-4 flex-1">
+                                {deal.description}
+                              </p>
+                              {deal.specs && (
+                                <div className="mb-6 flex flex-wrap gap-2">
+                                  {deal.specs.split(',').map((spec, i) => (
+                                    <span key={i} className="bg-brand-50 text-brand-700 text-[10px] px-2 py-1 rounded font-bold border border-brand-100">
+                                      {spec.trim()}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="flex items-center justify-between mt-auto pt-6 border-t border-zinc-100">
+                                <div className="text-2xl font-display font-black text-zinc-900">
+                                  {deal.price}
+                                </div>
+                                <a 
+                                  href={deal.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-brand-600 transition-colors"
                                 >
-                                  {isItemSaved(deal.url) ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
-                                </button>
+                                  Se Tilbud
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
                               </div>
-                            </div>
-                            <h3 className="text-xl font-bold text-zinc-900 mb-2 group-hover:text-brand-600 transition-colors">
-                              {deal.title}
-                            </h3>
-                            <p className="text-zinc-500 text-sm mb-6 flex-1">
-                              {deal.description}
-                            </p>
-                            <div className="flex items-center justify-between mt-auto pt-6 border-t border-zinc-100">
-                              <div className="text-2xl font-display font-black text-zinc-900">
-                                {deal.price}
-                              </div>
-                              <a 
-                                href={deal.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-brand-600 transition-colors"
-                              >
-                                Se Tilbud
-                                <ExternalLink className="w-4 h-4" />
-                              </a>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-white/10 border border-white/20 rounded-3xl p-12 text-center">
+                          <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 text-white/60">
+                            <ShieldAlert className="w-8 h-8" />
+                          </div>
+                          <h3 className="text-xl font-bold text-white mb-2">Ingen verificerede links fundet</h3>
+                          <p className="text-brand-50 max-w-md mx-auto">
+                            AI-scanneren fandt resultater, men kunne ikke verificere direkte links til produkterne. 
+                            Prøv at gøre din søgning mere specifik eller skift lokation.
+                          </p>
+                        </div>
+                      )}
 
                       {/* Sources */}
                       {result.sources.length > 0 && (
@@ -678,9 +709,17 @@ export default function App() {
                             <Trash2 className="w-4 h-4" />
                           </button>
                           
-                          <div className="flex items-center gap-2 mb-4">
-                            <div className="bg-zinc-100 px-2 py-0.5 rounded text-[10px] font-bold text-zinc-500 uppercase">
-                              {item.deal.store}
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex flex-col gap-1">
+                              <div className="bg-zinc-100 px-2 py-0.5 rounded text-[10px] font-bold text-zinc-500 uppercase w-fit">
+                                {item.deal.store}
+                              </div>
+                              {item.deal.specs && (
+                                <div className="flex items-center gap-1 text-[9px] text-emerald-600 font-bold">
+                                  <ShieldCheck className="w-2.5 h-2.5" />
+                                  Verificeret
+                                </div>
+                              )}
                             </div>
                             <div className="text-[10px] text-zinc-400">
                               Gemt {new Date(item.timestamp).toLocaleDateString('da-DK')}
@@ -695,9 +734,19 @@ export default function App() {
                             {item.deal.price}
                           </div>
                           
-                          <p className="text-xs text-zinc-500 mb-6 line-clamp-3 flex-1">
+                          <p className="text-xs text-zinc-500 mb-4 line-clamp-3 flex-1">
                             {item.deal.description}
                           </p>
+                          
+                          {item.deal.specs && (
+                            <div className="mb-6 flex flex-wrap gap-1">
+                              {item.deal.specs.split(',').map((spec, i) => (
+                                <span key={i} className="bg-zinc-100 text-zinc-600 text-[9px] px-2 py-0.5 rounded font-bold">
+                                  {spec.trim()}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                           
                           <div className="flex items-center gap-3">
                             <a 
