@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, 
@@ -72,6 +72,7 @@ export default function App() {
   });
 
   const [compareSubView, setCompareSubView] = useState<'searches' | 'items'>('items');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     localStorage.setItem('pricepulse_saved', JSON.stringify(savedSearches));
@@ -109,7 +110,8 @@ export default function App() {
     
     const giftQuery = `Gave til ${recipient} der er vild med ${interests}, budget ca. ${budget} kr. Find specifikke produkter og de bedste priser.`;
     setQuery(giftQuery);
-    handleSearch(giftQuery);
+    setView('scanner');
+    setTimeout(() => searchInputRef.current?.focus(), 100);
   };
 
   const saveCurrentSearch = () => {
@@ -243,6 +245,7 @@ export default function App() {
                       <Search className="w-6 h-6" />
                     </div>
                     <input 
+                      ref={searchInputRef}
                       type="text"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
@@ -321,7 +324,8 @@ export default function App() {
                       key={item.label}
                       onClick={() => {
                         setQuery(item.label);
-                        handleSearch(item.query);
+                        searchInputRef.current?.focus();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       className="flex items-center gap-2 px-4 py-2 bg-white border border-zinc-200 rounded-full text-sm font-medium text-zinc-600 hover:border-brand-500 hover:text-brand-600 hover:shadow-md transition-all"
                     >
