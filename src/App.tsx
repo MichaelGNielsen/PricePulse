@@ -404,6 +404,12 @@ export default function App() {
                             </button>
                           </div>
                           <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">Scanning Resultater</h2>
+                          <div className="flex items-start gap-2 bg-brand-700/30 border border-brand-500/30 p-3 rounded-xl mb-4">
+                            <AlertCircle className="w-5 h-5 text-brand-200 shrink-0 mt-0.5" />
+                            <p className="text-brand-50 text-sm leading-relaxed">
+                              Priserne er indhentet via AI-scanning i realtid. Vi forsøger altid at finde prisen inkl. moms, men tjek altid prisen på butikkens hjemmeside før køb.
+                            </p>
+                          </div>
                           <p className="text-brand-50 text-lg leading-relaxed max-w-3xl">
                             {result.summary}
                           </p>
@@ -468,9 +474,17 @@ export default function App() {
                                   ))}
                                 </div>
                               )}
+                              {deal.verification && (
+                                <p className="text-[10px] text-zinc-400 italic mb-4">
+                                  AI Verificering: {deal.verification}
+                                </p>
+                              )}
                               <div className="flex items-center justify-between mt-auto pt-6 border-t border-zinc-100">
                                 <div className="text-2xl font-display font-black text-zinc-900">
                                   {deal.price}
+                                  {(location === 'DK' || location === 'EU' || location === 'Nordics') && (
+                                    <span className="block text-[10px] text-zinc-400 font-normal mt-0.5">Inkl. Moms</span>
+                                  )}
                                 </div>
                                 <a 
                                   href={deal.url}
@@ -750,6 +764,12 @@ export default function App() {
                                 </span>
                               ))}
                             </div>
+                          )}
+                          
+                          {item.deal.verification && (
+                            <p className="text-[9px] text-zinc-400 italic mb-4">
+                              AI Verificering: {item.deal.verification}
+                            </p>
                           )}
                           
                           <div className="flex items-center gap-3">

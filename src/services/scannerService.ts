@@ -19,24 +19,24 @@ export async function scanForDeals(query: string, location: SearchLocation = 'DK
   LOCATION CONTEXT: ${locationContext}
   
   CRITICAL INSTRUCTIONS:
-  1. NO HALLUCINATED LINKS: You MUST ONLY use URLs that you have actually found and verified via the Google Search tool. NEVER "guess" or "construct" a URL. If you haven't found a working link to the specific product, do not include it.
-  2. DIRECT PRODUCT LINKS (DEEP LINKS): The 'url' MUST lead directly to the specific product page where the item can be added to a cart or purchased. 
-     - DO NOT link to search results pages (URLs containing '?s=', '/search/', or similar).
-     - DO NOT link to category pages or generic homepages.
-     - The link must land on a page where the user does NOT have to search again.
-  3. SPECIFICATION MATCHING (CRITICAL): Ensure the product on the linked page matches the query EXACTLY. 
-     - If the user asks for "8-12TB", a 4TB or 6TB drive is a FAIL. 
-     - Check capacity, model numbers, and technical specs on the landing page before including.
-  4. PRICE ACCURACY: The 'price' MUST be the exact price currently shown on the linked product page. Verify the price carefully.
-  5. AVAILABILITY: Only include items that are currently in stock or available for order.
-  6. LINK VALIDITY: Before including a deal, verify that the URL is active and leads directly to the product. Use your search grounding capabilities to confirm the page content.
-  7. NO PLACEHOLDERS: NEVER use URLs like "amazon.com/product/123" or "proshop.dk/item/abc". The URL must be the REAL, full URL found in the search results.
+  1. SOURCE CONSISTENCY (MANDATORY): For every deal you return, the [Title], [Price], [Store Name], and [URL] MUST all come from the EXACT SAME search result or landing page. 
+     - NEVER take a price from one search result and pair it with a URL from another.
+     - If Store A has it for 1.900 kr and Store B has it for 2.000 kr, you must create TWO separate deal objects or choose one. DO NOT create a deal with Store B's link and Store A's price.
+  2. PRICE ACCURACY (EXTREME PRIORITY): 
+     - The 'price' MUST be the exact price currently shown on the linked product page for a PRIVATE CONSUMER.
+     - In Denmark/EU, this MUST include VAT (Moms). Do NOT use the "excl. VAT" price.
+     - If you see "2.036,00 kr" on the page, the price in your JSON must be "2.036,00 DKK".
+     - Double-check the price. If you are unsure or if the price seems to come from a different store, discard the deal.
+  3. NO HALLUCINATED LINKS: You MUST ONLY use URLs that you have actually found and verified via the Google Search tool.
+  4. DIRECT PRODUCT LINKS: The 'url' MUST lead directly to the specific product page. No search results, no homepages.
+  5. SPECIFICATION MATCHING: Ensure the product matches the query EXACTLY (capacity, model, etc.).
+  6. NO PLACEHOLDERS: Use only REAL, full URLs found in search results.
   
   Return the results in a structured JSON format with:
-  1. An array of 'deals' each containing: title, price (with currency), store name, url, description (short), and rating (if available).
-  2. A 'summary' of the findings (e.g., "The cheapest option is X at store Y").
+  1. An array of 'deals' each containing: title, price (with currency), store name, url, description (short), specs, and a 'verification' string where you confirm "Price [X] found at [URL]".
+  2. A 'summary' of the findings.
   
-  Be precise and only include actual deals found.`;
+  Be precise. If the price on the page is different from what you first thought, update it to match the page exactly.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -61,8 +61,9 @@ export async function scanForDeals(query: string, location: SearchLocation = 'DK
                   description: { type: Type.STRING },
                   rating: { type: Type.STRING },
                   specs: { type: Type.STRING, description: "Technical specs found on the page (e.g., '12TB, 7200RPM')" },
+                  verification: { type: Type.STRING, description: "Confirmation of price and URL consistency" },
                 },
-                required: ["title", "price", "store", "url", "specs"],
+                required: ["title", "price", "store", "url", "specs", "verification"],
               },
             },
             summary: { type: Type.STRING },

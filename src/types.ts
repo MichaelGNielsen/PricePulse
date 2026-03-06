@@ -10,6 +10,7 @@ export interface Deal {
   rating?: string;
   imageUrl?: string;
   specs?: string;
+  verification?: string;
 }
 
 export interface SearchResult {
