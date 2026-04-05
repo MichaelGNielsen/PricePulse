@@ -41,7 +41,7 @@ const QUICK_SEARCHES = [
 
 const LOCATIONS: { value: SearchLocation; label: string; flag: string }[] = [
   { value: 'DK', label: 'Danmark', flag: '🇩🇰' },
-  { value: 'Nordics', label: 'Norden', flag: '🇪🇺' },
+  { value: 'Nordics', label: 'Norden', flag: '🇩🇰🇸🇪' },
   { value: 'EU', label: 'Europa', flag: '🇪🇺' },
   { value: 'Global', label: 'Verden', flag: '🌐' },
 ];
